@@ -24,6 +24,7 @@ spec:
       containers:
       - name: backend-python
         image: gzarba/desk-reservation-app:backend-python
+        imagePullPolicy: Always    
         ports:
         - containerPort: 5000
         env:

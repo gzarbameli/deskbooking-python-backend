@@ -5,7 +5,8 @@ import logging
 from datetime import timedelta, date
 
 app = Flask(__name__)
-CORS(app)
+#CORS(app)
+CORS(app, resources={r"/*": {"origins": "*", "headers": "*"}})
 
 standard_log = logging.getLogger("werkzeug")
 standard_log.disabled = True
