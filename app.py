@@ -58,7 +58,6 @@ def post_name():
     return jsonify({"message": "Name received"})
 
 @app.route("/book", methods=["OPTIONS","POST"])
-@cross_origin()
 def book():
     try:
         data = request.get_json()
