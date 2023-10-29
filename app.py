@@ -1,28 +1,15 @@
 from flask import Flask, request, jsonify, make_response
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 import mysql.connector
 import logging
 from datetime import timedelta, date
 
 app = Flask(__name__)
 
-#cors = CORS(app, resources={r"/*": {"origins": "*"}})
-#CORS(app)
-#CORS(app, resources={r"/*": {"origins": "http://desk-reservation-app.example.com"}})
-
-#app.config['CORS_HEADERS'] = 'Content-Type'
-def build_preflight_response():
-    response = make_response()
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add('Access-Control-Allow-Headers', "*")
-    response.headers.add('Access-Control-Allow-Methods', "*")
-    return response
-def build_actual_response(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response
+CORS(app)
 
 standard_log = logging.getLogger("werkzeug")
-#standard_log.disabled = True
+standard_log.disabled = True
 
 # Configura il logger per Loki con tracciamento
 logging.basicConfig(level=logging.DEBUG)
@@ -70,7 +57,7 @@ def post_name():
     print(name)
     return jsonify({"message": "Name received"})
 
-@app.route("/book", methods=["POST"])
+@app.route("/book", methods=["OPTIONS","POST"])
 @cross_origin()
 def book():
     try:
@@ -116,30 +103,27 @@ def serialize_date(dt):
 @app.route("/myreservations", methods=["OPTIONS","POST"])
 def my_reservations():
     try:
-        if request.method == 'OPTIONS': 
-            return build_preflight_response()
-        elif request.method == 'POST': 
-            data = request.get_json()
-            employee_id = data.get("employee_id")
-            app.logger.info("employee_id: " + employee_id)
-            cursor = mysql_connection.cursor()
-            cursor.execute("SELECT * FROM reservations WHERE employee_id = %s", (employee_id,))
-            results = cursor.fetchall()
-            cursor.close()
-            # Serializza gli oggetti timedelta e datetime.date nella lista dei risultati
-            serialized_results = []
-            for row in results:
-                reservation = {
-                    "id": row[0],
-                    "employee_id": row[1],
-                    "date": serialize_date(row[2]),
-                    "starting_time": serialize_timedelta(row[3]),
-                    "ending_time": serialize_timedelta(row[4]),
-                    "room_id": row[5]
-                }
-                serialized_results.append(reservation)
-            app.logger.info(serialized_results)
-            return build_actual_response(jsonify(serialized_results))
+        data = request.get_json()
+        employee_id = data.get("employee_id")
+        app.logger.info("employee_id: " + employee_id)
+        cursor = mysql_connection.cursor()
+        cursor.execute("SELECT * FROM reservations WHERE employee_id = %s", (employee_id,))
+        results = cursor.fetchall()
+        cursor.close()
+        # Serializza gli oggetti timedelta e datetime.date nella lista dei risultati
+        serialized_results = []
+        for row in results:
+            reservation = {
+                "id": row[0],
+                "employee_id": row[1],
+                "date": serialize_date(row[2]),
+                "starting_time": serialize_timedelta(row[3]),
+                "ending_time": serialize_timedelta(row[4]),
+                "room_id": row[5]
+            }
+            serialized_results.append(reservation)
+        app.logger.info(serialized_results)
+        return jsonify(serialized_results)
     except Exception as e:
         app.logger.error(f'Error in recovering the reservations": {str(e)}')
         return "An error occurred.", 500
