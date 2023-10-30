@@ -8,7 +8,6 @@ spec:
     endpoint: http://otel-collector-daemonset-collector.otel-collector.svc.cluster.local:4318
   propagators:
     - tracecontext
-    - baggage
   sampler:
     type: parentbased_traceidratio
     argument: "1"
@@ -16,4 +15,3 @@ spec:
     env:
       - name: OTEL_PYTHON_LOG_CORRELATION
         value: 'true'
-

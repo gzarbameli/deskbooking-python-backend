@@ -3,10 +3,14 @@ from flask_cors import CORS
 import mysql.connector
 import logging
 from datetime import timedelta, date
+from opentelemetry import trace
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 
 app = Flask(__name__)
 
 CORS(app)
+
+FlaskInstrumentor().instrument_app(app)
 
 standard_log = logging.getLogger("werkzeug")
 standard_log.disabled = True
@@ -15,18 +19,24 @@ standard_log.disabled = True
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('loki_logger')
 
-# Imposta il formato del logger per includere traceid e spanid
 class CustomFormatter(logging.Formatter):
     def format(self, record):
-        record.uuid = None
         if flask.has_request_context():
-            record.uuid = g.uuid if hasattr(g, 'uuid') else None
-            record.path = request.path
-            record.endpoint = request.endpoint
-            record.remote_addr = request.remote_addr
+            # Estrai l'ID del trace e dello span dal contesto di tracciamento
+            current_span = trace.get_current_span()
+            trace_id = current_span.get_span_context().trace_id
+            span_id = current_span.get_span_context().span_id
+        else:
+            trace_id = None
+            span_id = None
+        
+        record.traceId = trace_id
+        record.spanId = span_id
+        
         return super(CustomFormatter, self).format(record)
 
 custom_format = '''"traceid":"%(traceId)s", "spanid":"%(spanId)"s %(levelname)s %(name)s %(uuid)s %(path)s %(endpoint)s %(remote_addr)s  %(message)s'''
+
 handler = logging.StreamHandler()
 handler.setFormatter(CustomFormatter(fmt=custom_format))
 logger.addHandler(handler)
@@ -102,6 +112,7 @@ def serialize_date(dt):
 @app.route("/myreservations", methods=["OPTIONS","POST"])
 def my_reservations():
     try:
+        app.logger.info(request.headers)
         data = request.get_json()
         employee_id = data.get("employee_id")
         app.logger.info("employee_id: " + employee_id)
