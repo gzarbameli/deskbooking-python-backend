@@ -112,7 +112,6 @@ def serialize_date(dt):
 @app.route("/myreservations", methods=["OPTIONS","POST"])
 def my_reservations():
     try:
-        app.logger.info(request.headers)
         data = request.get_json()
         employee_id = data.get("employee_id")
         app.logger.info("employee_id: " + employee_id)
