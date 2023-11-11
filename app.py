@@ -109,17 +109,16 @@ def serialize_timedelta(td):
 def serialize_date(dt):
     return dt.strftime('%Y-%m-%d')
 
-@app.route("/myreservations", methods=["OPTIONS","POST"])
+@app.route("/myreservations", methods=["OPTIONS", "GET"])
 def my_reservations():
     try:
-        data = request.get_json()
-        employee_id = data.get("employee_id")
-        app.logger.info("employee_id: " + employee_id)
+        employee_id = request.args.get("employee_id")  # Ottieni il parametro employee_id dall'URL
+
         cursor = mysql_connection.cursor()
         cursor.execute("SELECT * FROM reservations WHERE employee_id = %s", (employee_id,))
         results = cursor.fetchall()
         cursor.close()
-        # Serializza gli oggetti timedelta e datetime.date nella lista dei risultati
+
         serialized_results = []
         for row in results:
             reservation = {
@@ -131,11 +130,12 @@ def my_reservations():
                 "room_id": row[5]
             }
             serialized_results.append(reservation)
+
         app.logger.info(serialized_results)
         return jsonify(serialized_results)
     except Exception as e:
-        app.logger.error(f'Error in recovering the reservations": {str(e)}')
-        return "An error occurred.", 500
+        app.logger.error(f'Errore nel recupero delle prenotazioni: {str(e)}')
+        return "Si è verificato un errore.", 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", use_reloader=False, port=5000, debug=True)
