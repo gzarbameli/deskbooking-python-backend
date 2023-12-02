@@ -41,14 +41,6 @@ handler = logging.StreamHandler()
 handler.setFormatter(CustomFormatter(fmt=custom_format))
 logger.addHandler(handler)
 
-mysql_connection = mysql.connector.connect(
-    host="mysql",
-    user="admin",
-    password="admin",
-    port=3306,
-    database="project"
-)
-
 @app.route("/stress_test")
 def stress_test():
     def fibo(num):
@@ -69,6 +61,15 @@ def post_name():
 
 @app.route("/book", methods=["OPTIONS","POST"])
 def book():
+
+    mysql_connection = mysql.connector.connect(
+    host="mysql",
+    user="admin",
+    password="admin",
+    port=3306,
+    database="project"
+    )
+
     try:
         data = request.get_json()
         employee_id = data.get("employee_id")
@@ -97,8 +98,12 @@ def book():
         else:
             app.logger.error("Error in parsing required fields...")
             return "Please enter all required fields", 400
+        
+        mysql_connection.close()
+
     except Exception as e:
         app.logger.error(f'Error while registering the reservation": {str(e)}')
+        mysql_connection.close()
         return "An error occurred.", 500
 
 # Funzione per convertire un oggetto timedelta in una rappresentazione serializzabile
@@ -111,6 +116,15 @@ def serialize_date(dt):
 
 @app.route("/myreservations", methods=["OPTIONS", "GET"])
 def my_reservations():
+
+    mysql_connection = mysql.connector.connect(
+    host="mysql",
+    user="admin",
+    password="admin",
+    port=3306,
+    database="project"
+    )
+
     try:
         employee_id = request.args.get("employee_id")  # Ottieni il parametro employee_id dall'URL
 
@@ -118,6 +132,7 @@ def my_reservations():
         cursor.execute("SELECT * FROM reservations WHERE employee_id = %s", (employee_id,))
         results = cursor.fetchall()
         cursor.close()
+        mysql_connection.close()
 
         serialized_results = []
         for row in results:
@@ -135,6 +150,7 @@ def my_reservations():
         return jsonify(serialized_results)
     except Exception as e:
         app.logger.error(f'Errore nel recupero delle prenotazioni: {str(e)}')
+        mysql_connection.close()
         return "Si è verificato un errore.", 500
 
 if __name__ == "__main__":
