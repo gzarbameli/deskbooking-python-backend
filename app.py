@@ -82,6 +82,7 @@ def book():
             cursor = mysql_connection.cursor()
             cursor.execute("SELECT room_id FROM room WHERE name = %s", (room,))
             room_id = cursor.fetchone()[0]
+            app.logger.info(str(room_id))
             cursor.close()
 
             cursor = mysql_connection.cursor()
