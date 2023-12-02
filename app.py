@@ -79,18 +79,19 @@ def book():
         time_e = data.get("time_e")
 
         if room and date and time_s and time_e:
+
             cursor = mysql_connection.cursor()
-            
+
             cursor.execute("SELECT room_id FROM room WHERE name = %s", (room,))
             room_id = cursor.fetchone()[0]
-            app.logger.info(str(room_id))
 
             cursor.execute("INSERT INTO reservations (employee_id, date, starting_time, ending_time, room_id) VALUES (%s, %s, %s, %s, %s)", (employee_id, date, time_s, time_e, room_id))
 
             cursor.execute("SELECT * FROM reservations")
             results = cursor.fetchall()
-            
+
             cursor.close()
+            mysql_connection.commit()
             mysql_connection.close()
             app.logger.info("Reservation correctly registered")
             return jsonify({"token": "123"})
