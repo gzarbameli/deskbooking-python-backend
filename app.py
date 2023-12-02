@@ -93,13 +93,13 @@ def book():
             results = cursor.fetchall()
             cursor.close()
 
+            mysql_connection.close()
             app.logger.info("Reservation correctly registered")
             return jsonify({"token": "123"})
         else:
             app.logger.error("Error in parsing required fields...")
+            mysql_connection.close()
             return "Please enter all required fields", 400
-        
-        mysql_connection.close()
 
     except Exception as e:
         app.logger.error(f'Error while registering the reservation": {str(e)}')
