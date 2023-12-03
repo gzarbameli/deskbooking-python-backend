@@ -32,6 +32,13 @@ spec:
             value: "app.py"
           - name: FLASK_ENV
             value: "development"
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
 
 ---
 apiVersion: v1
